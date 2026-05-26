@@ -1,6 +1,6 @@
 import asyncio
 from src.bot import bot, dp
-from src.logging_config import setup_logging
+from src.core.logger import setup_logging
 from src.handlers import all_routers
 
 

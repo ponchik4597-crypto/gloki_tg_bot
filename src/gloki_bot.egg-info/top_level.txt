@@ -1,6 +1,0 @@
-bot
-config
-db
-handlers
-logging_config
-main

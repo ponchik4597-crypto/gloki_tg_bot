@@ -1,7 +1,8 @@
+import httpx
 from aiogram import types, F, Router
 from aiogram.filters import CommandStart
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
-import httpx
+from bs4 import BeautifulSoup
 
 router = Router()
 
@@ -53,11 +54,34 @@ async def cmd_contacts(message: types.Message):
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(url, headers=headers, timeout=5)
+
         if response.status_code == 200:
+            soup = BeautifulSoup(response.text, "html.parser")
+            # телефон
+            phone_tag = soup.find("a", href=lambda href: href and "tel:" in href)
+            if phone_tag:
+                raw_phone = phone_tag.get("href").replace("tel:", "").strip()
+                if len(raw_phone) == 11 and raw_phone.startswith(("8", "7")):
+                    phone = f"{raw_phone[0]} ({raw_phone[1:4]}) {raw_phone[4:7]}-{raw_phone[7:9]}-{raw_phone[9:11]}"
+                else:
+                    phone = (
+                        phone_tag.text.strip() if phone_tag.text.strip() else raw_phone
+                    )
+            else:
+                phone = "8 (800) 600-90-77"
+            # email
+            email_tag = soup.find("a", href=lambda href: href and "mailto:" in href)
+            if email_tag:
+                email = email_tag.text.strip()
+                if not email:
+                    email = email_tag.get("href").replace("mailto:", "").strip()
+            else:
+                email = "info@imbian.ru"
+
             contacts_text = (
-                "<b>🏢 Контакты компании ИМБИАН</b>\n\n"
-                "• <b>Горячая линия:</b> 8 (800) 600-90-77\n"
-                "• <b>Email:</b> info@imbian.ru\n\n"
+                f"<b>🏢 Контакты компании ИМБИАН</b>\n\n"
+                f"• <b>Горячая линия:</b> {phone}\n"
+                f"• <b>Email:</b> {email}\n"
                 "<b>📍 Офисы и производство:</b>\n"
                 "• <b>Москва (Зеленоград):</b> ул. Конструктора Лукина, д. 14 с.12\n"
                 "• <b>Новосибирская обл. (Кольцово):</b> ул. Садовая, 2/7\n"
@@ -69,7 +93,8 @@ async def cmd_contacts(message: types.Message):
                 "⚠️ Не удалось подключиться к сайту. Актуальный Email: info@imbian.ru"
             )
     except Exception:
-        contacts_text = "<b>🏢 Контакты ИМБИАН:</b>\n\n• Тел: 8 (800) 600-90-77\n• Email: info@imbian.ru"
+        contacts_text = "<b>🏢 Контакты компании ИМБИАН:</b>\n\n• Тел: 8 (800) 600-90-77\n• Email: info@imbian.ru"
+
     await message.answer(contacts_text, reply_markup=get_main_keyboard())
 
 

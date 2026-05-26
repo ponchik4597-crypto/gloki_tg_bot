@@ -4,12 +4,12 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-COPY requirements.txt ./
+COPY pyproject.toml uv.lock ./
 
-RUN uv pip install --system --no-cache -r requirements.txt
+RUN uv sync --frozen --no-cache
 
-COPY src/ ./src/
+COPY . .
 
-ENV PYTHONPATH=/app/src
+ENV PYTHONPATH=/app
 
-CMD ["python3", "main.py"]
+CMD ["uv", "run", "python", "-m", "src.main"]
