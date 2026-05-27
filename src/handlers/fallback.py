@@ -1,4 +1,5 @@
-from aiogram import types, Router
+from aiogram import Router, types
+
 from src.handlers.start import get_main_keyboard
 
 router = Router()

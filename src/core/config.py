@@ -1,5 +1,15 @@
-import os
-from dotenv import load_dotenv
+from pydantic import PostgresDsn, SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-load_dotenv()
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+class Settings(BaseSettings):
+    debug: bool = False
+    port: int = 8000
+    database_url: PostgresDsn
+
+    bot_token: SecretStr
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+
+settings = Settings()

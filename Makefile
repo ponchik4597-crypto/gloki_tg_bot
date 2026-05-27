@@ -1,8 +1,9 @@
-.PHONY: format lint check
+.PHONY: format lint lint-fix check
 
 #форматирование кода
 format:
 	uv run ruff format .
+	uv run ruff check . --fix
 
 #проверка кода линтером
 lint:
@@ -13,4 +14,6 @@ lint-fix:
 	uv run ruff check . --fix
 
 #проверка перед коммитом
-check: lint format
+check:
+	uv run ruff format --check .
+	uv run ruff check .

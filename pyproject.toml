@@ -11,6 +11,10 @@ readme = "README.md"
 authors = [
     { name = "Олеся Викторина", email = "olesia_viktorina@mail.ru" }
 ]
+
+[tool.uv]
+package = false
+
 dependencies = [
     "aiofiles==25.1.0",
     "aiogram==3.27.0",
@@ -47,11 +51,14 @@ dev = [
 ]
 
 [tool.ruff]
-line-length = 88
+line-length = 120
 target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "W"]
+select = ["E", "F", "I", "W", "T20"]
+ignore = [
+    "E501",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
