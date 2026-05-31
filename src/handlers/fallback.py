@@ -3,9 +3,8 @@ import logging
 from aiogram import F, Router, types
 from aiogram.fsm.context import FSMContext
 
-from src.handlers.start import get_main_keyboard
-
-# from src.services.ai_service import get_ai_consultation
+from src.handlers.keyboard import get_main_keyboard
+from src.services.ai_service import get_ai_consultation
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -17,17 +16,14 @@ async def fallback_handler(message: types.Message, state: FSMContext):
     current_state = await state.get_state()
     if current_state is not None:
         return
+
     logger.info(f"У пользователя {message.from_user.id} сработал ИИ-fallback")
 
-    await message.answer(
-        "Извините, ИИ-консультант временно отключен. Пожалуйста, используйте кнопки меню.",
-        reply_markup=get_main_keyboard(),
-    )
+    await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
 
-    # await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
-    # ai_answer = await get_ai_consultation(message.text)
-
-    # await message.answer(ai_answer, parse_mode="Markdown")
+    ai_answer = await get_ai_consultation(message.text)
+    safe_answer = ai_answer[:4000]
+    await message.answer(safe_answer, parse_mode="")
 
 
 @router.message()

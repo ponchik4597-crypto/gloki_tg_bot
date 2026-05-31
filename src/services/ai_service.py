@@ -5,14 +5,21 @@ from src.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+# ЖЕСТКАЯ ЗАЩИТА: Удаляем системные переменные, которые могут ломать URL
+os.environ.pop("OPENAI_BASE_URL", None)
+os.environ.pop("OPENAI_API_BASE", None)
+
+# Создаем клиент со строгим эндпоинтом
 client = AsyncOpenAI(
     base_url="https://openrouter.ai",
     api_key=(settings.ai_token.get_secret_value() if settings.ai_token else None) or os.getenv("OPENAI_API_KEY"),
     default_headers={
         "HTTP-Referer": "https://github.com",
-        "X-Title": "Gloki Imbian Bot"
+        "X-Title": "Gloki Imbian Bot",
+        "Accept": "application/json"
     }
 )
+
 
 SYSTEM_PROMPT = """
 Ты — официальный ИИ-консультант компании ИМБИАН.
@@ -30,6 +37,7 @@ async def get_ai_consultation(user_message: str) -> str:
         return "Извините, ИИ-консультант сейчас на техобслуживании."
 
     try:
+        # ИСПРАВЛЕНО: Убрали лишний префикс 'openrouter/' перед названием модели
         response = await client.chat.completions.create(
             model="meta-llama/llama-3-8b-instruct:free",
             messages=[
