@@ -13,7 +13,11 @@ uv sync
 ```bash
 cp .env.example .env
 ```
-
+### База данных (Миграции)
+Перед первым запуском примените миграции Alembic для создания таблиц в БД:
+```bash
+uv run alembic upgrade head
+```
 ### Запуск бота
 Запустите проект локально через модуль `src.main`:
 ```bash
@@ -31,6 +35,11 @@ uv run python -m src.main
 **Запуск проекта:**
 ```bash
 docker-compose up --build -d
+```
+
+**Просмотр логов приложения:**
+```bash
+docker compose logs -f bot
 ```
 
 **Остановка проекта:**
