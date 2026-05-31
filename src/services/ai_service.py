@@ -1,41 +1,66 @@
 import logging
 import os
-
 from openai import AsyncOpenAI
+from src.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Инициализируем ИИ
-ai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = AsyncOpenAI(
+    base_url="https://openrouter.ai",
+    api_key=(settings.ai_token.get_secret_value() if settings.ai_token else None) or os.getenv("OPENAI_API_KEY"),
+    default_headers={
+        "HTTP-Referer": "https://github.com",
+        "X-Title": "Gloki Imbian Bot"
+    }
+)
 
-IMBIAN_KNOWLEDGE_BASE = """
-ИМБИАН» — российская научно-производственная компания,основанная в 2019 году и специализирующаяся на разработке и серийном выпуске медицинских тест-систем (ИХА, ИФА, ПЦР) и БАДов. Производственные мощности расположены в Кольцово и Славянске-на-Кубани,обеспечивая выпуск продукции под собственными брендами и контрактное производство,Более подробную информацию можно найти на сайте imbian.ru.
+SYSTEM_PROMPT = """
+Ты — официальный ИИ-консультант компании ИМБИАН.
+Твоя задача — отвечать строго по скрипту и базе знаний компании.
+Правила:
+1. Будь вежлив, отвечай кратко и строго по делу.
+2. Не придумывай факты. Если ты чего-то не знаешь, вежливо отправь пользователя к меню.
+3. Отвечай только на текстовые вопросы, связанные с ИМБИАН.
 """
 
 
-async def get_ai_consultation(user_question: str) -> str:
+async def get_ai_consultation(user_message: str) -> str:
+    if not settings.ai_token:
+        logger.error("Переменная конфигурации AI_TOKEN не задана!")
+        return "Извините, ИИ-консультант сейчас на техобслуживании."
+
     try:
-        response = await ai_client.chat.completions.create(
-            model="gpt-4o-mini",
+        response = await client.chat.completions.create(
+            model="meta-llama/llama-3-8b-instruct:free",
             messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "Ты — официальный ИИ-консультант компании ИМБИАН (IMBIAN).\n"
-                        "Твоя задача — отвечать на вопросы клиентов строго на основе предоставленной Базы Знаний.\n\n"
-                        f"--- НАЧАЛО БАЗЫ ЗНАНИЙ ---\n{IMBIAN_KNOWLEDGE_BASE}\n--- КОНЕЦ БАЗЫ ЗНАНИЙ ---\n\n"
-                        "КРИТИЧЕСКИЕ ПРАВИЛА:\n"
-                        "1. Отвечай вежливо, профессионально и лаконично.\n"
-                        "2. Если вопрос НЕ связан с компанией ИМБИАН, её продукцией, контактами или контрактами, "
-                        "ты должен строго, но вежливо отказать в ответе.\n"
-                        "3. Не придумывай факты, которых нет в Базе Знаний."
-                    ),
-                },
-                {"role": "user", "content": user_question},
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_message}
             ],
             temperature=0.3,
         )
-        return response.choices.message.content
+
+        ai_text = ""
+
+        if hasattr(response, 'choices') and response.choices:
+            ai_text = response.choices[0].message.content
+
+        elif isinstance(response, dict) and "choices" in response:
+            ai_text = response["choices"][0]["message"]["content"]
+
+        elif isinstance(response, str):
+            ai_text = response
+
+        else:
+            ai_text = str(response)
+
+        if not ai_text:
+            return "Не удалось получить текстовый ответ от ИИ."
+
+        if len(ai_text) > 4000:
+            ai_text = ai_text[:4000] + "\n\n...[Ответ усечен из-за длины]"
+
+        return ai_text
+
     except Exception as e:
-        logger.error(f"Ошибка при обращении к OpenAI API: {e}")
-        return "Извините, сейчас я испытываю временные трудности с ответом. Пожалуйста, попробуйте позже."
+        logger.error(f"Ошибка OpenRouter API: {e}", exc_info=True)
+        return "Произошла ошибка при обработке запроса. Пожалуйста, воспользуйтесь меню."
