@@ -1,0 +1,40 @@
+services:
+  db_bot:
+    image: postgres:16-alpine
+    container_name: gloki_db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: "${DB_NAME}"
+      POSTGRES_USER: "${DB_USER}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  # сервис тг-бота
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gloki_bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+    depends_on:
+      db_bot:
+        condition: service_healthy
+
+# постоянное хранилище для данных
+volumes:
+  postgres_data:
