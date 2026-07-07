@@ -27,6 +27,8 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      - PYTHONPATH=/app
     volumes:
       - .:/app
     depends_on:

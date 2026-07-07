@@ -4,7 +4,7 @@ from aiogram import F, Router, types
 from aiogram.fsm.context import FSMContext
 
 from src.handlers.keyboard import get_main_keyboard
-from src.services.ai_service import get_ai_consultation
+from src.services.llm_service import get_ai_consultation
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -23,7 +23,8 @@ async def fallback_handler(message: types.Message, state: FSMContext):
 
     ai_answer = await get_ai_consultation(message.text)
     safe_answer = ai_answer[:4000]
-    await message.answer(safe_answer, parse_mode="")
+
+    await message.answer(safe_answer)
 
 
 @router.message()

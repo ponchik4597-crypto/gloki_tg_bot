@@ -4,7 +4,6 @@ from aiogram.types import (
     KeyboardButton,
     ReplyKeyboardMarkup,
 )
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
 def get_main_keyboard():
@@ -34,7 +33,11 @@ def get_categories_keyboard() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="БАД", callback_data="cat_bad"),
             InlineKeyboardButton(text="Коллаген", callback_data="cat_collagen"),
         ],
-        [InlineKeyboardButton(text="Дигностические системы", callback_data="cat_diag")],
+        [
+            InlineKeyboardButton(
+                text="Диагностические системы", callback_data="cat_diag"
+            )
+        ],
     ]
 
     return InlineKeyboardMarkup(inline_keyboard=buttons, resize_keyboard=True)
@@ -43,8 +46,13 @@ def get_categories_keyboard() -> InlineKeyboardMarkup:
 def get_category_keyboard(product_id: str) -> InlineKeyboardMarkup:
     keyboard = [
         [
-            InlineKeyboardBuilder(text="📨 Оставить заявку на этот товар", callback_data=f"order_prod_{product_id}"),
-            InlineKeyboardBuilder(text="⬅️ Назад к списку товаров", callback_data="back_to_list"),
+            InlineKeyboardButton(
+                text="📨 Оставить заявку на этот товар",
+                callback_data=f"order_prod_{product_id}",
+            ),
+            InlineKeyboardButton(
+                text="⬅️ Назад к списку товаров", callback_data="back_to_list"
+            ),
         ]
     ]
 
